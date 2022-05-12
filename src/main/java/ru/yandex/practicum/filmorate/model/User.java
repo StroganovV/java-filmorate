@@ -9,9 +9,6 @@ import java.time.LocalDate;
 @Data
 public class User {
 
-    private int id;
-    private String name;
-
     @NotNull
     @Email
     private final String email;
@@ -19,6 +16,8 @@ public class User {
     @NotBlank
     private final String login;
 
+    private int id;
+    private String name;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @Past
