@@ -36,7 +36,7 @@ public class FilmController {
 
                 throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
 
-            } else if (films.containsKey(film.hashCode())){
+            } else if (films.containsKey(film.hashCode())) {
 
                 throw new ValidationException("Такой фильм уже был добавлен");
 
@@ -48,7 +48,7 @@ public class FilmController {
                 return film;
             }
         } catch (ValidationException e) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
 
@@ -68,7 +68,7 @@ public class FilmController {
                 return film;
             }
         } catch (ValidationException e) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
 }
