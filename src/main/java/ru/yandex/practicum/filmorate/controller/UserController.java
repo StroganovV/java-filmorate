@@ -28,9 +28,6 @@ public class UserController {
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         try {
-            if (user.getLogin().contains(" ")) {
-                throw new ValidationException("Login не должен содержать пробелов");
-            } else {
 
                 if (user.getName() == null || user.getName().isBlank()) {
 
@@ -45,7 +42,7 @@ public class UserController {
                 log.debug(String.valueOf(user));
 
                 return user;
-            }
+
         } catch (ValidationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
