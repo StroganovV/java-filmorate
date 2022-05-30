@@ -15,7 +15,7 @@ public class Film {
     @Positive
     private final int duration;
 
-    private int id;
+    private long id;
 
     @NotBlank
     @Size(max=200)

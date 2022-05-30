@@ -1,10 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import javax.validation.Valid;
 import javax.validation.ValidationException;
@@ -17,34 +19,25 @@ import java.util.List;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
+    InMemoryFilmStorage filmStorage;
 
-    private final HashMap<Integer, Film> films = new HashMap<>();
+    @Autowired
+    public FilmController(InMemoryFilmStorage filmStorage) {
+        this.filmStorage = filmStorage;
+    }
 
     @GetMapping
     public List<Film> findAll() {
-
-        return new ArrayList<>(films.values());
+       return filmStorage.findAll();
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         try {
-            if (film.getReleaseDate() != null &&
-                    film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
 
-                throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
+            log.debug(String.valueOf(film));
+            return filmStorage.create(film);
 
-            } else if (films.containsKey(film.hashCode())) {
-
-                throw new ValidationException("Такой фильм уже был добавлен");
-
-            } else {
-
-                films.put(film.hashCode(), film);
-                log.debug(String.valueOf(film));
-
-                return film;
-            }
         } catch (ValidationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
@@ -60,10 +53,8 @@ public class FilmController {
 
             } else {
 
-                films.put(film.hashCode(), film);
                 log.debug(String.valueOf(film));
-
-                return film;
+                return filmStorage.update(film);
             }
         } catch (ValidationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
