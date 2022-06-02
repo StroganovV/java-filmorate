@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.IncorrectEmailException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.ValidationException;
@@ -12,6 +14,7 @@ import java.util.List;
 public class InMemoryUserStorage implements UserStorage {
     private final HashMap<Long, User> users = new HashMap<>();
     private final List<String> emails = new ArrayList<>();
+    long id = 0;
 
     @Override
     public User create(User user) throws ValidationException {
@@ -21,9 +24,10 @@ public class InMemoryUserStorage implements UserStorage {
         }
 
         if (emails.contains(user.getEmail())) {
-            throw new ValidationException("Пользователь с таким email уже создан");
+            throw new IncorrectEmailException("Пользователь с таким email уже создан");
         }
 
+        user.setId(++id);
         users.put(user.getId(), user);
         emails.add(user.getEmail());
 
@@ -37,11 +41,16 @@ public class InMemoryUserStorage implements UserStorage {
             user.setName(user.getLogin());
         }
 
-        users.put(user.getId(), user);
+        if (user.getId() <= 0) {
+            throw new UserNotFoundException("Неккоректный ID пользователя");
+        }
 
         if(!(emails.contains(user.getEmail()))) {
+            emails.remove(users.get(user.getId()).getEmail());
             emails.add(user.getEmail());
         }
+
+        users.put(user.getId(), user);
 
         return user;
     }
@@ -52,6 +61,9 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User getUser(long id) {
+        if (id <= 0 || !(users.containsKey(id))) {
+            throw new UserNotFoundException("Неккоректный ID пользователя");
+        }
         return users.getOrDefault(id, null);
     }
 }

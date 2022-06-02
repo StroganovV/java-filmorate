@@ -12,11 +12,11 @@ import java.util.Set;
 
 @Data
 public class User {
+    private Set<Long> friends  = new HashSet<>();
 
     @NotNull
     @Email
     private final String email;
-    private Set<Long> friends  = new HashSet<>();
 
     @NotBlank
     @Pattern(regexp = "^\\S*$")
@@ -37,7 +37,7 @@ public class User {
         friends.remove(id);
     }
 
-    public Set<Long> getAllFriends() {
-        return friends;
+    public List<Long> getAllFriends() {
+        return new ArrayList<>(friends);
     }
 }
