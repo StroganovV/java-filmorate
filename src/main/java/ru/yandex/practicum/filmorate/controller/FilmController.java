@@ -67,6 +67,12 @@ public class FilmController {
         log.debug("Показать " + count + " лучших фильмов");
         return filmService.getTopCountFilms(count);
     }
+
+    @DeleteMapping("/films/{id}")
+    public void deleteFilm(@PathVariable("id") Long id) {
+        log.debug("Удаление фильма - id " + id);
+        filmService.delete(id);
+    }
 }
 
 

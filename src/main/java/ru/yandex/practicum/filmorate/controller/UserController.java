@@ -70,4 +70,10 @@ public class UserController {
         log.debug("Запрошен список общих друзей Пользователей " + id + " и " + otherId);
         return userService.mutualFriends(id, otherId);
     }
+
+    @DeleteMapping(value = "/{id}")
+    public void deleteUser(@PathVariable("id") Long id) {
+        log.debug("Удаление пользователя - id " + id);
+        userService.delete(id);
+    }
 }

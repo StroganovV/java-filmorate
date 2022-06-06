@@ -66,4 +66,9 @@ public class InMemoryUserStorage implements UserStorage {
         }
         return users.getOrDefault(id, null);
     }
+
+    @Override
+    public void delete(Long id) {
+        users.remove(id);
+    }
 }

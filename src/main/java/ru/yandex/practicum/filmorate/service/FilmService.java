@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import java.util.*;
@@ -12,7 +11,7 @@ import java.util.stream.Collectors;
 
 
 @Service
-public class FilmService implements FilmStorage {
+public class FilmService extends InMemoryFilmStorage {
     InMemoryFilmStorage storage;
 
     @Autowired
@@ -35,6 +34,11 @@ public class FilmService implements FilmStorage {
         return storage.findAll();
     }
 
+    @Override
+    public void delete(Long id) {
+        storage.delete(id);
+    }
+
     public Film addLike(long filmId, long userId) {
         Film film = storage.getFilm(filmId);
         film.addLike(userId);
@@ -52,7 +56,7 @@ public class FilmService implements FilmStorage {
         }
 
         Film film = storage.getFilm(filmId);
-        film.deletLike(userId);
+        film.deleteLike(userId);
         storage.update(film);
         return film;
     }

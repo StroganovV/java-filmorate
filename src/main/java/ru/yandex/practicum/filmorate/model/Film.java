@@ -32,7 +32,7 @@ public class Film {
         likes.add(userId);
     }
 
-    public void deletLike(Long id) {
+    public void deleteLike(Long id) {
         likes.remove(id);
     }
 }

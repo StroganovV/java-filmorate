@@ -9,6 +9,7 @@ public interface FilmStorage {
     Film create(Film film);
     Film update(Film film) throws UserNotFoundException;
     List<Film> findAll();
+    void delete(Long id);
 
 
 }

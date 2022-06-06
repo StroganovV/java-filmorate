@@ -36,8 +36,4 @@ public class User {
     public void deleteFriend(long id) {
         friends.remove(id);
     }
-
-    public List<Long> getAllFriends() {
-        return new ArrayList<>(friends);
-    }
 }
