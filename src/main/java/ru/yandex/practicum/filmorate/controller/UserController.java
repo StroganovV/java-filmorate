@@ -1,73 +1,79 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import javax.validation.ValidationException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final HashMap<String, User> users = new HashMap<>();
+    UserService userService;
 
+    @Autowired
+    public UserController(UserService userStorage) {
+        this.userService = userStorage;
+    }
 
     @GetMapping
     public List<User> findAll() {
+        log.debug("Запрос списка всех пользователей");
+        return userService.findAll();
+    }
 
-        return new ArrayList<>(users.values());
+    @GetMapping(value = "/{id}")
+    public User getUser(@PathVariable("id") Long id) {
+        log.debug("Запрос пользователя - id " + id);
+        return userService.getUser(id);
     }
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        try {
-
-                if (user.getName() == null || user.getName().isBlank()) {
-
-                    user.setName(user.getLogin());
-                }
-
-                if (users.containsKey(user.getEmail())) {
-                    throw new ValidationException("Пользователь с таким email уже создан");
-                }
-
-                users.put(user.getEmail(), user);
-                log.debug(String.valueOf(user));
-
-                return user;
-
-        } catch (ValidationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        }
+        log.debug("Создать пользователя");
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@Valid @RequestBody User user) {
+        log.debug("Обновить данные пользователя");
+        return userService.update(user);
+    }
 
-        try {
-            if (user.getLogin().contains(" ")) {
-                throw new ValidationException("Login не должен содержать пробелов");
-            } else {
+    @PutMapping("/{id}/friends/{friendId}")
+    public User addFriend(@PathVariable("id") Long id,
+                          @PathVariable("friendId") Long friendId) {
+        log.debug("Добавить Пользователя (" + friendId + ") в друзья к Пользователю (" + id + ")");
+        return userService.addFriend(id, friendId);
+    }
 
-                if (user.getName() == null || user.getName().isBlank()) {
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public User deleteFriend(@PathVariable("id") Long id,
+                             @PathVariable("friendId") Long friendId) {
+        log.debug("Удалить Пользователя (" + friendId + ") из друзей Пользователя (" + id + ")");
+        return userService.deleteFriend(id, friendId);
+    }
 
-                    user.setName(user.getLogin());
-                }
+    @GetMapping("/{id}/friends")
+    public List<User> getUserFriendsList(@PathVariable("id") Long id) {
+        log.debug("Запрошен список всех друзей пользователя");
+        return userService.getUserFriendList(id);
+    }
 
-                users.put(user.getEmail(), user);
-                log.debug(String.valueOf(user));
+    @GetMapping(value = "/{id}/friends/common/{otherId}")
+    public List<User> getMutualFriends(@PathVariable("id") Long id,
+                                       @PathVariable("otherId") Long otherId) {
+        log.debug("Запрошен список общих друзей Пользователей " + id + " и " + otherId);
+        return userService.mutualFriends(id, otherId);
+    }
 
-                return user;
-            }
-        } catch (ValidationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        }
+    @DeleteMapping(value = "/{id}")
+    public void deleteUser(@PathVariable("id") Long id) {
+        log.debug("Удаление пользователя - id " + id);
+        userService.delete(id);
     }
 }

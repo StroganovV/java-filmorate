@@ -5,9 +5,14 @@ import lombok.Data;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Data
 public class User {
+    private Set<Long> friends  = new HashSet<>();
 
     @NotNull
     @Email
@@ -17,11 +22,18 @@ public class User {
     @Pattern(regexp = "^\\S*$")
     private final String login;
 
-    private int id;
+    private long id;
     private String name;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @Past
     private LocalDate birthday;
 
+    public void addFriend(long id) {
+        friends.add(id);
+    }
+
+    public void deleteFriend(long id) {
+        friends.remove(id);
+    }
 }
