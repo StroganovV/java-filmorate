@@ -1,5 +1,5 @@
 # java-filmorate
-![dia](https://dbdiagram.io/d/62b0824869be0b672c041971)
+![dia](dia.png)
 
 https://dbdiagram.io/d/62b0824869be0b672c041971
 
