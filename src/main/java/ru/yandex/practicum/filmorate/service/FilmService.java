@@ -1,49 +1,45 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 
 @Service
-public class FilmService extends InMemoryFilmStorage {
-    InMemoryFilmStorage storage;
+public class FilmService {
+    FilmStorage storage;
 
     @Autowired
-    public FilmService(InMemoryFilmStorage storage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage storage) {
         this.storage = storage;
     }
 
-    @Override
     public Film create(Film film) {
-            return storage.create(film);
+        return storage.create(film);
     }
 
-    @Override
     public Film update(Film film) {
         return storage.update(film);
     }
 
-    @Override
-    public List<Film> findAll() {
-        return storage.findAll();
-    }
-
-    @Override
     public void delete(Long id) {
         storage.delete(id);
+    }
+
+    public List<Film> findAll() {
+        return storage.findAll();
     }
 
     public Film addLike(long filmId, long userId) {
         Film film = storage.getFilm(filmId);
         film.addLike(userId);
-        storage.update(film);
-        return film;
+        return storage.update(film);
     }
 
     public Film deleteLike(long filmId, long userId) {

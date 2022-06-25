@@ -16,6 +16,7 @@ public class InMemoryFilmStorage implements FilmStorage{
     private final HashMap<Long, Film> films = new HashMap<>();
     long id = 0;
 
+
     @Override
     public Film create(Film film) throws ValidationException {
         if (film.getReleaseDate() != null &&
@@ -50,7 +51,7 @@ public class InMemoryFilmStorage implements FilmStorage{
         return new ArrayList<>(films.values());
     }
 
-
+    @Override
     public Film getFilm(long id) {
         if (id <= 0 || !(films.containsKey(id))) {
             throw new FilmNotFoundException("Некорректный ID фильма");

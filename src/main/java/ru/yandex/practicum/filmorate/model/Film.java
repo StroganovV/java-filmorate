@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,9 +13,10 @@ import java.util.Set;
 @Data
 public class Film {
     private Set<Long> likes = new HashSet<>();
+//    private List<Genre> genres = new ArrayList<>();
 
     @NotBlank
-    private final String name;
+    private final String title;
 
     @Positive
     private final int duration;
