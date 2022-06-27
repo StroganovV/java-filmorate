@@ -5,18 +5,16 @@ import lombok.Data;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Set;
 
 
 @Data
 public class Film {
-    private Set<Long> likes = new HashSet<>();
-//    private List<Genre> genres = new ArrayList<>();
+    private Set<Long> likes;
+    private Set<Genre> genres;
 
     @NotBlank
-    private final String title;
+    private final String name;
 
     @Positive
     private final int duration;
@@ -26,6 +24,9 @@ public class Film {
     @NotBlank
     @Size(max=200)
     private final String description;
+
+    @NotNull
+    Mpa mpa;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate releaseDate;
