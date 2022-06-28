@@ -9,9 +9,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.storage.Mappers.GenreMapper;
-import ru.yandex.practicum.filmorate.storage.Mappers.MpaMapper;
+import ru.yandex.practicum.filmorate.storage.dao.FilmGenreStorage;
 import ru.yandex.practicum.filmorate.storage.dao.FilmStorage;
 
 import java.sql.ResultSet;
@@ -21,11 +19,23 @@ import java.util.*;
 @Component
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jt;
-
+    private final LikesDbStorage likesDbStorage;
+    private final FilmGenreStorage filmGenreStorage;
+    private final MpaDbStorage mpaDbStorage;
+    private final GenreDbStorage genreDbStorage;
 
     @Autowired
-    public FilmDbStorage(JdbcTemplate jt) {
+    public FilmDbStorage(JdbcTemplate jt,
+                         LikesDbStorage likesDbStorage,
+                         FilmGenreStorage filmGenreStorage,
+                         MpaDbStorage mpaDbStorage,
+                         GenreDbStorage genreDbStorage
+    ) {
         this.jt = jt;
+        this.likesDbStorage = likesDbStorage;
+        this.filmGenreStorage = filmGenreStorage;
+        this.mpaDbStorage = mpaDbStorage;
+        this.genreDbStorage = genreDbStorage;
     }
 
     @Override
@@ -58,12 +68,6 @@ public class FilmDbStorage implements FilmStorage {
             jt.update(sql2, film.getMpa().getId(), film.getId());
         }
 
-        if (film.getLikes() != null && film.getLikes().size() > 0) {
-            String sql2 = "UPDATE films set count_likes=?\n" +
-                    "where id=?";
-            jt.update(sql2, film.getLikes().size(), film.getId());
-        }
-
         updateLikesAndFilmGenreTables(film);
 
         return film;
@@ -71,20 +75,14 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film update(Film film) {
-        String sql = "UPDATE films SET name=?, description=?, release_date=?, duration=?\n" +
-                "where id=?";
+        String sql = "UPDATE films SET name=?, description=?, release_date=?, duration=?, mpa_id=?\n" +
+                " where id=?";
         jt.update(sql, film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
+                film.getMpa().getId(),
                 film.getId());
-
-        if (film.getMpa() != null && film.getMpa().getId() != null) {
-            String sql2 = "UPDATE films SET mpa_id=?\n" +
-                    "where id=?";
-            jt.update(sql2, film.getMpa().getId(), film.getId());
-            film.setMpa(getMpa(film.getMpa().getId()));
-        }
 
         if (film.getLikes() != null && film.getLikes().size() > 0) {
             String sql3 = "UPDATE films SET count_likes=?\n" +
@@ -92,15 +90,12 @@ public class FilmDbStorage implements FilmStorage {
             jt.update(sql3, film.getLikes().size(), film.getId());
         }
 
-        String sqlDelLikes = "delete from likes where film_id = ?";
-        String sqlDelGenres = "delete from film_genre where film_id = ?";
-        jt.update(sqlDelLikes, film.getId());
-        jt.update(sqlDelGenres, film.getId());
-
+        filmGenreStorage.deleteGenre(film.getId());
+        likesDbStorage.deleteLikesByFilmId(film.getId());
         updateLikesAndFilmGenreTables(film);
 
         if (film.getGenres() != null && film.getGenres().size() > 0) {
-            film.setGenres(new HashSet<>(Objects.requireNonNull(getGenres(film.getId()))));
+            film.setGenres(new HashSet<>(Objects.requireNonNull(getGenres(filmGenreStorage.getGenresByFilmId(film.getId())))));
         }
 
         return film;
@@ -137,41 +132,28 @@ public class FilmDbStorage implements FilmStorage {
         film.setId(rs.getLong("id"));
         film.setReleaseDate(rs.getDate("release_date").toLocalDate());
 
-        film.setLikes(new HashSet<>(getLikes(film.getId())));
+        film.setLikes(new HashSet<>(likesDbStorage.getLikes(film.getId())));
 
-        if (getGenres(film.getId()) != null && getGenres(film.getId()).size() > 0) {
-            film.setGenres(new HashSet<>(getGenres(film.getId())));
+        List<Genre> genres = getGenres(filmGenreStorage.getGenresByFilmId(film.getId()));
+        if (genres != null && genres.size() > 0) {
+            film.setGenres(new HashSet<>(genres));
         }
 
-        Long mpaId = rs.getLong("mpa_id");
+        long mpaId = rs.getLong("mpa_id");
 
         if (mpaId != 0) {
-            film.setMpa(getMpa(mpaId));
+            film.setMpa(mpaDbStorage.getMpa(mpaId).get());
         }
 
 
         return film;
     }
 
-    private Mpa getMpa(long id) {
-        String sql = "select * from mpa where id=?";
-        return jt.queryForObject(sql, new MpaMapper(), id);
-    }
-
-    private List<Long> getLikes(long id) {
-        String sql = "select user_id from likes where film_id=?";
-        return jt.query(sql, (rs, rowNum) -> rs.getLong("user_id"), id);
-    }
-
-    private List<Genre> getGenres(long id) {
-        String sql = "select * from film_genre where film_id=?";
-        List<Long> genr = jt.query(sql, (rs, rowNum) -> rs.getLong("genre_id"), id);
-
+    private List<Genre> getGenres(List<Long> genr) {
         List<Genre> genres = new ArrayList<>();
         if (genr != null && genr.size() > 0) {
             for (Long idg : genr) {
-                String sqlGenres = "select * from genres where id=?";
-                Genre genre = jt.queryForObject(sqlGenres, new GenreMapper(), idg);
+                Genre genre = genreDbStorage.getGenre(idg).get();
                 genres.add(genre);
             }
         }
@@ -185,17 +167,13 @@ public class FilmDbStorage implements FilmStorage {
     private void updateLikesAndFilmGenreTables(Film film) {
         if (film.getGenres() != null && film.getGenres().size() > 0) {
             for (Genre genre : film.getGenres()) {
-                String sql = "INSERT INTO film_genre (film_id, genre_id)\n" +
-                        "VALUES (?, ?)";
-                jt.update(sql, film.getId(), genre.getId());
+                filmGenreStorage.updateFilmGenreDb(film.getId(), genre.getId());
             }
         }
 
         if (film.getLikes() != null && film.getLikes().size() > 0) {
             for (Long id : film.getLikes()) {
-                String sql = "INSERT INTO likes (film_id, user_id)\n" +
-                        "VALUES (?, ?)";
-                jt.update(sql, film.getId(), id);
+                likesDbStorage.updateLikesStorage(film.getId(), id);
             }
         }
     }

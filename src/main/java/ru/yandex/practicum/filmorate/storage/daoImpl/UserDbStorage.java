@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.dao.FriendStorage;
 import ru.yandex.practicum.filmorate.storage.dao.UserStorage;
 
 import java.sql.ResultSet;
@@ -19,11 +20,13 @@ import java.util.Optional;
 @Component
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jt;
+    private final FriendsDbStorage friendsDbStorage;
 
 
     @Autowired
-    public UserDbStorage(JdbcTemplate jt) {
+    public UserDbStorage(JdbcTemplate jt, FriendsDbStorage friendsDbStorage) {
         this.jt = jt;
+        this.friendsDbStorage = friendsDbStorage;
     }
 
     @Override
@@ -100,27 +103,18 @@ public class UserDbStorage implements UserStorage {
         user.setId(rs.getLong("id"));
         user.setBirthday(rs.getDate("birthday").toLocalDate());
         user.setName(rs.getString("name"));
-        user.setFriends(new HashSet<>(getFriends(user.getId())));
+        user.setFriends(new HashSet<>(friendsDbStorage.getFriendsByUserId(user.getId())));
 
         return user;
     }
-
-    private List<Long> getFriends(long id) {
-        String sql = "select * from friends where user_id=?";
-        return jt.query(sql, (rs, rowNum) -> rs.getLong("friend_id"), id);
-    }
-
     private void updateFriendsTable(User user) {
         if (user.getFriends() != null && user.getFriends().size() > 0) {
-            String sqlDel = "delete from friends where user_id = ?";
-            jt.update(sqlDel, user.getId());
+            friendsDbStorage.deleteFriendsByUserId(user.getId());
         }
 
         assert user.getFriends() != null;
-        for (Long id : user.getFriends()) {
-            String sql = "INSERT INTO friends (user_id, friend_id)\n" +
-                    "VALUES (?, ?)";
-            jt.update(sql, user.getId(), id);
+        for (Long friendId : user.getFriends()) {
+            friendsDbStorage.updateFriendsByUserId(user.getId(), friendId);
         }
     }
 }

@@ -11,7 +11,9 @@ import ru.yandex.practicum.filmorate.storage.dao.UserStorage;
 
 import javax.validation.ValidationException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserService {
@@ -73,15 +75,24 @@ public class UserService {
         } else {
             throw new UserNotFoundException("User не найден");
         }
-        user.addFriend(newFriendId);
+        Set<Long> friends = user.getFriends();
+        friends.add(newFriendId);
+        user.setFriends(friends);
         return storage.update(user);
     }
 
     public User deleteFriend(long userId, long delFriendId) {
         User user = storage.getUser(userId).get();
         User friend = storage.getUser(delFriendId).get();
-        friend.deleteFriend(userId);
-        user.deleteFriend(delFriendId);
+
+        Set<Long> friends = user.getFriends();
+        friends.remove(delFriendId);
+        user.setFriends(friends);
+
+        Set<Long> friends2 = friend.getFriends();
+        friends2.remove(userId);
+        friend.setFriends(friends2);
+
         storage.update(friend);
         return storage.update(user);
     }
