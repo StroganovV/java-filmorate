@@ -7,6 +7,8 @@ import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.util.Arrays;
+
 @RestControllerAdvice
 public class ErrorHandler {
 
@@ -21,6 +23,22 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleFilmNotFoundException(final FilmNotFoundException e) {
+        return new ErrorResponse(
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleGenreNotFoundException(final GenreNotFoundException e) {
+        return new ErrorResponse(
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleMpaNotFoundException(final MpaNotFoundException e) {
         return new ErrorResponse(
                 e.getMessage()
         );
@@ -53,7 +71,8 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleThrowable(final Throwable e) {
-        return new ErrorResponse(
+        String s = Arrays.toString(e.getStackTrace());
+        return new ErrorResponse(s +
                 "Произошла непредвиденная ошибка."
         );
     }
